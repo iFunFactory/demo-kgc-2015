@@ -1,0 +1,15 @@
+.DS_Store
+Library
+Temp
+*.csproj
+*.pidb
+*.unityproj
+*.sln
+*.userprefs
+*.apk
+*.exe
+*.mdb
+maps.meta
+setting.dat
+client_data
+announce
