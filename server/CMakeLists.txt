@@ -28,13 +28,13 @@ set(USE_CCACHE true)
 
 # Package maintainer email address.
 # This will be used to generate debian and/or rpm package(s).
-set(CONTACT_EMAIL "contact@yourcompany.com")
+set(CONTACT_EMAIL "info@ifunfactory.com")
 
 # Generate a distribution package in tgz?
-set(WANT_TGZ_PACKAGE true)
+set(WANT_TGZ_PACKAGE false)
 
 # Generate a distribution package in Debian DEB?
-set(WANT_DEB_PACKAGE false)
+set(WANT_DEB_PACKAGE deb)
 
 # Generate a distribution package in Redhat RPM?
 set(WANT_RPM_PACKAGE false)
@@ -46,7 +46,7 @@ set(PACKAGE_WITH_BUILD_NUMBER_FROM_GIT false)
 set(PACKAGE_WITH_BUILD_NUMBER_FROM_SVN false)
 
 # Generate .DLL for Unity Engine
-set(GENERATE_UNITY_PROTOBUF_DLL false)
+set(GENERATE_UNITY_PROTOBUF_DLL true)
 
 
 # Sets if you want different flavors.

@@ -31,13 +31,13 @@
             "io_service_threads_size": 4
           },
           "SessionService": {
-            "tcp_json_port": 8012,
+            "tcp_json_port": 0,
             "udp_json_port": 0,
-            "http_json_port": 8018,
-            "tcp_protobuf_port": 0,
+            "http_json_port": 0,
+            "tcp_protobuf_port": 8022,
             "udp_protobuf_port": 0,
             "http_protobuf_port": 0,
-            "session_timeout_in_second" : 3600,
+            "session_timeout_in_second" : 300,
             "use_session_reliability": false,
             "use_encryption": false,
             "tcp_encryptions": ["ife1", "ife2"],
