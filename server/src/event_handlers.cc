@@ -124,6 +124,45 @@ void OnUserKilled(const Ptr<Session> &session) {
 
   SendUserKilled(uid);
 }
+
+
+void OnInputUpdate(const Ptr<Session> &session, const Ptr<FunMessage> &msg) {
+  if (not msg->HasExtension(cs_input))
+    return;
+
+  const auto &_msg = msg->GetExtension(cs_input);
+  int64_t uid;
+  if (not session->GetFromContext("uid", &uid))
+    return;
+
+  boost::mutex::scoped_lock lock(the_user_lock);
+  auto user_it = the_users.find(uid);
+  if (user_it == the_users.end())
+    return;
+
+  State &user = user_it->second;
+  user.av = _msg.a_v();
+  user.ah = _msg.a_h();
+  user.px = _msg.p_x();
+  user.pz = _msg.p_z();
+  user.ry = _msg.r_y();
+  user.rw = _msg.r_w();
+  const bool jumped = (_msg.has_jump() && _msg.jump());
+
+  Ptr<FunMessage> res {new FunMessage()};
+  auto *users = res->MutableExtension(sc_update)->mutable_users();
+  for (const auto &u: the_users) {
+    auto *entry = users->Add();
+    u.second.Write(entry);
+    if (jumped && u.second.uid == uid) {
+      entry->set_jump(jumped);
+    }
+  }
+
+  for (const auto &u: the_users) {
+    u.second.session->SendMessage("sc_update", res);
+  }
+}
 ////////////////////////////////////////////////////////////////////////////////
 // Session open/close handlers
 ////////////////////////////////////////////////////////////////////////////////
@@ -237,6 +276,7 @@ void RegisterEventHandlers() {
     /////////////////////////////////////////////
     // PLACE YOUR CLIENT MESSAGE HANDLER HERE. //
     /////////////////////////////////////////////
+    HandlerRegistry::Register2("cs_input", OnInputUpdate);
   }
 }
 
