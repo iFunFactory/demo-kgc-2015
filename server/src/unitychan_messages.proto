@@ -45,5 +45,44 @@ message Spawn {
 }
 
 
-//extend FunMessage {
-//}
+message SpawnSelf {
+  required Spawn me = 1;
+  repeated UserState others = 2;
+}
+
+
+message Killed {
+  required int32 user_id = 1;
+}
+
+
+message UserUpdate {
+  repeated UserState users = 1;
+}
+
+
+message ChangeFace {
+  required string clip = 1;
+  required int32 layer = 2;
+}
+
+
+message FaceUpdate {
+  required int32 user_id = 1;
+  required string clip = 2;
+  required int32 layer = 3;
+}
+
+
+extend FunMessage {
+  // 서버 -> 클라이언트
+  optional SpawnSelf sc_spawn_self = 16;   // 연결된 직후에 받는 메시지
+  optional Spawn sc_spawn_other = 17;  // 다른 유저가 연결되면 받는 메시지
+  optional UserUpdate sc_update = 18;  // 모든 유저의 현재 상태 전달
+  optional Killed sc_killed = 19;      // 유저 연결이 끊어지면 처리
+  optional FaceUpdate sc_face = 20;    // 표정 변경 브로드캐스트
+
+  // 클라이언트 -> 서버
+  optional InputUpdate cs_input = 31;  // 입력 변경
+  optional ChangeFace cs_face = 32;    // 표정 변경
+}
