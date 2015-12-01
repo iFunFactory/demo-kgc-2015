@@ -163,6 +163,31 @@ void OnInputUpdate(const Ptr<Session> &session, const Ptr<FunMessage> &msg) {
     u.second.session->SendMessage("sc_update", res);
   }
 }
+
+void OnFaceUpdate(const Ptr<Session> &session, const Ptr<FunMessage> &msg) {
+  if (not msg->HasExtension(cs_face))
+    return;
+
+  int64_t uid;
+  if (not session->GetFromContext("uid", &uid))
+    return;
+
+  const auto &_msg = msg->GetExtension(cs_face);
+
+  Ptr<FunMessage> res {new FunMessage()};
+  auto *face = res->MutableExtension(sc_face);
+  face->set_user_id(uid);
+  face->set_clip(_msg.clip());
+  face->set_layer(_msg.layer());
+
+  for (const auto &u: the_users) {
+    u.second.session->SendMessage("sc_face", res);
+  }
+}
+
+}  // unnamed namespace
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Session open/close handlers
 ////////////////////////////////////////////////////////////////////////////////
@@ -239,8 +264,6 @@ void OnAccountLogin(const Ptr<Session> &session, const Json &message) {
   }
 }
 
-}  // unnamed namespace
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Extend the function below with your handlers.
@@ -277,6 +300,7 @@ void RegisterEventHandlers() {
     // PLACE YOUR CLIENT MESSAGE HANDLER HERE. //
     /////////////////////////////////////////////
     HandlerRegistry::Register2("cs_input", OnInputUpdate);
+    HandlerRegistry::Register2("cs_face", OnFaceUpdate);
   }
 }
 
