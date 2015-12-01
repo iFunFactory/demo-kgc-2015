@@ -98,6 +98,32 @@ void OnUserSpawned(const Ptr<Session> &session) {
   SendSpawn(session, inserted.first->second);
   SendSpawnOther(inserted.first->second);
 }
+
+
+void SendUserKilled(int32_t uid) {
+  Ptr<FunMessage> msg {new FunMessage()};
+  msg->MutableExtension(sc_killed)->set_user_id(uid);
+  for (auto &user: the_users) {
+    user.second.session->SendMessage("sc_killed", msg);
+  }
+}
+
+
+void OnUserKilled(const Ptr<Session> &session) {
+  int64_t uid;
+  if (not session->GetFromContext("uid", &uid))
+    return;  // uid가 없다
+
+  {
+    boost::mutex::scoped_lock lock(the_user_lock);
+    auto user_it = the_users.find(uid);
+    if (user_it == the_users.end())
+      return;  // 해당 유저가 없다
+    the_users.erase(user_it);
+  }
+
+  SendUserKilled(uid);
+}
 ////////////////////////////////////////////////////////////////////////////////
 // Session open/close handlers
 ////////////////////////////////////////////////////////////////////////////////
@@ -119,6 +145,13 @@ void OnSessionClosed(const Ptr<Session> &session, SessionCloseReason reason) {
   } else if (reason == kClosedForUnknownSessionId) {
     // The session was invalid.
   }
+
+  OnUserKilled(session);
+}
+
+
+void OnTcpClosed(const Ptr<Session> &session) {
+  session->Close();  // TCP 연결이 끊기면 session을 닫아버린다
 }
 
 
@@ -180,6 +213,7 @@ void RegisterEventHandlers() {
    */
   {
     HandlerRegistry::Install2(OnSessionOpened, OnSessionClosed);
+    HandlerRegistry::RegisterTcpTransportDetachedHandler(OnTcpClosed);
   }
 
 
