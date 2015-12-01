@@ -10,30 +10,40 @@
 // use relative path like this:
 import "funapi/network/fun_message.proto";
 
-// Your specific message class.
-message PbufEchoMessage {
-  required string msg = 1;
+
+message UserState {
+  required int32 user_id = 1;
+  required float a_v = 2;
+  required float a_h = 3;
+  required float p_x = 4;
+  required float p_z = 5;
+  required float r_y = 6;
+  required float r_w = 7;
+  optional bool jump = 8;
 }
 
 
-message PbufAnotherMessage {
-  optional string msg = 1;
+message InputUpdate {
+  required float a_v = 1;
+  required float a_h = 2;
+  required float p_x = 3;
+  required float p_z = 4;
+  required float r_y = 5;
+  required float r_w = 6;
+  optional bool jump = 7;
 }
 
 
-extend FunMessage {
-  optional PbufEchoMessage pbuf_echo = 16;
-  optional PbufAnotherMessage pbuf_another = 17;
+message Spawn {
+  required int32 user_id = 1;
+  required float a_v = 2;
+  required float a_h = 3;
+  required float p_x = 4;
+  required float p_z = 5;
+  required float r_y = 6;
+  required float r_w = 7;
 }
 
 
-import "funapi/service/multicast_message.proto";
-
-message PbufHelloMessage
-{
-  optional string message = 1;
-}
-extend FunMulticastMessage
-{
-  optional PbufHelloMessage pbuf_hello = 9;
-}
+//extend FunMessage {
+//}

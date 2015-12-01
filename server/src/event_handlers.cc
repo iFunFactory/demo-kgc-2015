@@ -11,6 +11,38 @@
 
 namespace unitychan {
 
+namespace {
+// 유저 상태
+struct State {
+  const int uid;   // 유저 아이디
+  float av, ah;
+  float px, pz;    // 현재 위치
+  float ry, rw;
+  bool jump;       // 점프 상태
+
+  Ptr<Session> session;
+  fun::WallClock::Value last_update;
+
+  void Write(Spawn *spawn) const {
+    spawn->set_user_id(uid);
+    spawn->set_a_v(av);
+    spawn->set_a_h(ah);
+    spawn->set_p_x(px);
+    spawn->set_p_z(pz);
+    spawn->set_r_y(ry);
+    spawn->set_r_w(rw);
+  }
+
+  void Write(UserState *state) const {
+    state->set_user_id(uid);
+    state->set_a_v(av);
+    state->set_a_h(ah);
+    state->set_p_x(px);
+    state->set_p_z(pz);
+    state->set_r_y(ry);
+    state->set_r_w(rw);
+  }
+};
 ////////////////////////////////////////////////////////////////////////////////
 // Session open/close handlers
 ////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +63,6 @@ void OnSessionClosed(const Ptr<Session> &session, SessionCloseReason reason) {
     // The session was invalid.
   }
 }
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,92 +107,10 @@ void OnAccountLogin(const Ptr<Session> &session, const Json &message) {
   } else {
     // login failure
     LOG(INFO) << "login failure";
-
   }
 }
 
-
-void OnEchoMessage(const Ptr<Session> &session, const Json &message) {
-  // Since we have not specified a JSON schema for "echo" below,
-  // the passed "message" may have malformed data.
-  // We should manually validate it before use.
-  //
-  // Assuming "echo" is in the form below:
-  //
-  //   {"message":"xxx"}
-
-  static const char *kMessage = "message";
-
-  if (not message.HasAttribute(kMessage)) {
-    LOG(ERROR) << "Invalid message";
-    return;
-  }
-
-  if (not message[kMessage].IsString()) {
-    LOG(ERROR) << "Invalid message";
-    return;
-  }
-
-  // OK. The message looks good.
-  string message_from_client = message["message"].GetString();
-
-  // We sends the content back to the client.
-  Json response;
-  response[kMessage] = message_from_client;
-  session->SendMessage("echo", response);
-
-  LOG(INFO) << "message: " << message_from_client;
-}
-
-
-void OnPbufEchoMessage(const Ptr<Session> &session, const Ptr<FunMessage> &message) {
-  // This is a Google protocol buffer example.
-  // Engine invokes the handler only when the "message" is legitimate.
-  // So, we do not have to check "required" fields.
-  // But it's your responsibility to make sure required "optional" fields exist.
-
-
-  // Every client-server protobuf message must extend "FunMessage".
-  // Please see unitychan_messages.proto.
-  //
-  // In this example,
-  //   message PbufEchoMessage {
-  //     required string msg = 1;
-  //   }
-  //
-  //   extend FunMessage {
-  //     potional PbufEchoMessage pbuf_echo = 16;
-  //   }
-  if (not message->HasExtension(pbuf_echo)) {
-    LOG(ERROR) << "Invalid message";
-    return;
-  }
-  const PbufEchoMessage &pbuf_message = message->GetExtension(pbuf_echo);
-  const string &msg = pbuf_message.msg();
-  LOG(INFO) << "pbuf message: " << msg;
-
-  // Constructs a response message.
-  Ptr<FunMessage> response(new FunMessage);
-  PbufEchoMessage *echo_response = response->MutableExtension(pbuf_echo);
-  echo_response->set_msg(msg);
-
-  // Wires the message.
-  session->SendMessage("pbuf_echo", response);
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Timer handler.
-//
-// (Just for your reference. Please replace with your own.)
-////////////////////////////////////////////////////////////////////////////////
-
-void OnTick(const Timer::Id &timer_id, const WallClock::Value &clock) {
-  // PLACE HERE YOUR TICK HANDLER CODE.
-}
-
-
+}  // unnamed namespace
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -194,33 +143,9 @@ void RegisterEventHandlers() {
         JsonSchema("facebook_access_token", JsonSchema::kString, true));
 
     HandlerRegistry::Register("login", OnAccountLogin, login_msg);
-
-    // 2. Another JSON message example.
-    //    In this time, we skipped a JSON schema.
-    //    So no validation will be performed.
-    HandlerRegistry::Register("echo", OnEchoMessage);
-
-
-    // 3. Registering a Google Protobuf message handler.
-    //    Protobuf itself provides a validation using the "required" keyword.
-    HandlerRegistry::Register2("pbuf_echo", OnPbufEchoMessage);
-
-
     /////////////////////////////////////////////
     // PLACE YOUR CLIENT MESSAGE HANDLER HERE. //
     /////////////////////////////////////////////
-
-  }
-
-
-  /*
-   * Registers a timer.
-   *
-   * Below demonstrates a repeating timer. One-shot timer is also available.
-   * Please see the Timer class.
-   */
-  {
-    Timer::ExpireRepeatedly(boost::posix_time::seconds(1), unitychan::OnTick);
   }
 }
 
