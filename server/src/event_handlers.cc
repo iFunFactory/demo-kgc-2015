@@ -2,6 +2,11 @@
 
 #include "event_handlers.h"
 
+#include <map>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/thread/mutex.hpp>
+
 #include <funapi.h>
 #include <glog/logging.h>
 
@@ -43,12 +48,64 @@ struct State {
     state->set_r_w(rw);
   }
 };
+
+
+static boost::mutex the_user_lock;
+static std::map<int, State> the_users;
+
+
+void SendSpawn(const Ptr<Session> &session, const State &state) {
+  Ptr<FunMessage> msg {new FunMessage()};
+  auto *_msg = msg->MutableExtension(sc_spawn_self);
+  state.Write(_msg->mutable_me());
+
+  auto *others = _msg->mutable_others();
+  for (auto &user: the_users) {
+    if (state.uid != user.second.uid)
+      user.second.Write(others->Add());
+  }
+
+  session->SendMessage("sc_spawn_self", msg);
+}
+
+
+void SendSpawnOther(const State &state) {
+  Ptr<FunMessage> msg {new FunMessage()};
+  state.Write(msg->MutableExtension(sc_spawn_other));
+
+  for (auto &user: the_users) {
+    if (state.uid != user.second.uid)
+      user.second.session->SendMessage("sc_spawn_other", msg);
+  }
+}
+
+
+void OnUserSpawned(const Ptr<Session> &session) {
+  // 생성 위치는 (x, z) [-10 .. 10] 안에서 랜덤
+  float px = static_cast<float>(fun::RandomGenerator::GenerateNumber(-10, 10));
+  float pz = static_cast<float>(fun::RandomGenerator::GenerateNumber(-10, 10));
+
+  const auto now = fun::WallClock::Now();
+  boost::mutex::scoped_lock lock(the_user_lock);
+
+  // uid는 아무도 없으면 1, 아니면 최대 값 + 1
+  int uid = the_users.empty() ? 1 : the_users.rbegin()->first + 1;
+  session->AddToContext("uid", uid);
+  auto inserted = the_users.emplace(std::make_pair(
+        uid, State{uid, 0.0f, 0.0f, px, pz, 0.0f, 0.0f, false, session, now}));
+  BOOST_ASSERT(inserted.second);
+
+  SendSpawn(session, inserted.first->second);
+  SendSpawnOther(inserted.first->second);
+}
 ////////////////////////////////////////////////////////////////////////////////
 // Session open/close handlers
 ////////////////////////////////////////////////////////////////////////////////
 
 void OnSessionOpened(const Ptr<Session> &session) {
   logger::SessionOpened(to_string(session->id()), WallClock::Now());
+
+  OnUserSpawned(session);
 }
 
 
