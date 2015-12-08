@@ -1,5 +1,6 @@
 ﻿using Fun;
 using ProtoBuf;
+using CnControls;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -18,6 +19,7 @@ public class NetworkController : MonoBehaviour
     public GameObject m_ChanPrefab;
     public GameObject m_ChanOtherPrefab;
 
+	private FacebookConnector facebook;
     private FunapiNetwork network;
     private int my_id;
     private GameObject my_chan;
@@ -29,6 +31,12 @@ public class NetworkController : MonoBehaviour
     {
         instance = gameObject.GetComponent<NetworkController>();
 
+		// facebook
+		facebook = GameObject.Find("Play Controller").GetComponent<FacebookConnector>();
+		facebook.EventCallback += new SnEventHandler(OnFacebookEvent);
+		facebook.Init();
+
+		// funapi network
         network = new FunapiNetwork(false);
         network.OnSessionInitiated += new FunapiNetwork.SessionInitHandler(OnSessionInitiated);
         network.OnSessionClosed += new FunapiNetwork.SessionCloseHandler(OnSessionClosed);
@@ -55,6 +63,9 @@ public class NetworkController : MonoBehaviour
     {
         if (network != null)
             network.Update();
+
+		if (CnInputManager.GetButtonDown("Facebook"))
+			facebook.PostWithScreenshot("funapi test~");
     }
 
     void OnApplicationQuit()
@@ -81,6 +92,21 @@ public class NetworkController : MonoBehaviour
     {
         network = null;
     }
+
+	private void OnFacebookEvent (SnResultCode result)
+	{
+		switch (result)
+		{
+		case SnResultCode.kInitialized:
+			facebook.LogInWithPublish(new List<string>() {
+				"public_profile", "email", "user_friends", "publish_actions"});
+			break;
+			
+		case SnResultCode.kError:
+			DebugUtils.Assert(false);
+			break;
+		}
+	}
 
     public void SendInput (InputUpdate input)
     {

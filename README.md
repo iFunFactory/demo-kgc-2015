@@ -4,6 +4,17 @@
 
 ## 클라이언트
 
+**Facebook SDK 7.2가 포함되어 있습니다.**
+
+페이스북 로그인 및 스샷 포스팅 기능이 포함되어 있습니다. 클라이언트 플러그인을 사용하면 단 몇 줄의
+코드만으로 간편하게 게임에 페이스북을 붙일 수 있습니다.
+
+페이스북 테스트를 위해서는 페이스북 앱 등록이 필요하며 해당 앱으로 Facebook Setting을 해야합니다.
+테스트를 위해서 필요한 권한은 user_friends, publish_actions, public_profile, basic_info
+입니다. 테스트용 Access Token은 아래 링크에서 얻을 수 있습니다.
+
+https://developers.facebook.com/tools/explorer
+
 **아래와 같은 무료 오픈 소스를 사용하였습니다.**
 
 - [CN Controls](https://www.assetstore.unity3d.com/en/?gclid=CNqTmfWduskCFQJwvAodBOIFBg#!/content/15233)
